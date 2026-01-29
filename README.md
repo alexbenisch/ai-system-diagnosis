@@ -148,3 +148,90 @@ run_cmd "find / -perm -4000 -type f 2>/dev/null | head -20" "SUID Files (first 2
 # 13. ENVIRONMENT
 section "13. ENVIRONMENT VARIABLES"
 run_cmd "env | sort" "Environment Variables"
+run_cmd "echo \$PATH" "PATH Variable"
+
+# 14. HARDWARE INFO
+section "14. HARDWARE INFORMATION"
+run_cmd "cat /proc/cpuinfo | grep -E 'processor|vendor_id|model name' | head -20" "CPU Details"
+run_cmd "cat /proc/meminfo | grep MemTotal" "Total Physical Memory"
+run_cmd "ls -l /sys/class/net/" "Network Interfaces List"
+run_cmd "cat /proc/devices" "Configured Devices"
+
+# 15. QUICK DIAGNOSTICS SUMMARY
+section "15. QUICK DIAGNOSTICS SUMMARY"
+{
+    echo "### POTENTIAL ISSUES DETECTED ###"
+    echo ""
+    
+    # Check high load
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    CPU_COUNT=$(grep -c ^processor /proc/cpuinfo)
+    echo "CPU Count: $CPU_COUNT"
+    echo "Current Load (1min): $LOAD"
+    
+    # Check memory
+    MEM_FREE=$(free | grep Mem | awk '{print $4}')
+    MEM_TOTAL=$(free | grep Mem | awk '{print $2}')
+    echo "Free Memory: $MEM_FREE KB of $MEM_TOTAL KB"
+    
+    # Check disk
+    echo ""
+    echo "Filesystems over 80% full:"
+    df -h | awk '$5+0 > 80 {print $0}'
+    
+    # Check zombies
+    echo ""
+    ZOMBIES=$(ps aux | awk '$8=="Z"' | wc -l)
+    echo "Zombie Processes: $ZOMBIES"
+    
+    # Check D-state
+    DSTATE=$(ps aux | awk '$8~"D"' | wc -l)
+    echo "D-state Processes: $DSTATE"
+    
+    # Check failed services
+    echo ""
+    echo "Failed Services:"
+    systemctl list-units --failed 2>/dev/null || echo "Cannot check (systemctl not available)"
+    
+} >> "$OUTPUT"
+
+# Completion
+{
+    echo ""
+    echo "==================================================================================="
+    echo "Report generation completed: $(date)"
+    echo "Output file: $OUTPUT"
+    echo "File size: $(du -h "$OUTPUT" | cut -f1)"
+    echo "==================================================================================="
+} >> "$OUTPUT"
+
+echo "System diagnostic report generated: $OUTPUT"
+echo "File size: $(du -h "$OUTPUT" | cut -f1)"
+echo ""
+echo "To analyze with Claude-code:"
+echo "  1. Download this file"
+echo "  2. Run: claude-code"
+echo "  3. Upload the report and ask: 'Analyze this system diagnostic report and identify issues'"
+
+Claude-code Analyse-Prompts:
+Nachdem du den Report generiert hast, nutze diese Prompts in Claude-code:
+# Basis-Analyse
+Analyze this system diagnostic report and identify the top 5 issues with their severity and recommended actions.
+
+# Detaillierte Performance-Analyse
+Based on this diagnostic report, analyze the performance bottlenecks. Focus on CPU, memory, disk I/O, and network. Provide specific metrics and recommendations.
+
+# Sicherheits-Audit
+Review this report for security concerns including failed logins, open ports, SUID files, and unusual processes.
+
+# Kapazitätsplanung
+Based on the current resource usage in this report, project when we'll need to scale and what resources to add.
+
+# Root-Cause-Analyse
+The system is experiencing [describe symptom]. Analyze this diagnostic report to find the root cause.
+Quick Test:
+chmod +x sysdiag.sh
+./sysdiag.sh
+cat sysdiag_report_*.txt | less
+
+
