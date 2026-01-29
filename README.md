@@ -229,9 +229,11 @@ Based on the current resource usage in this report, project when we'll need to s
 
 # Root-Cause-Analyse
 The system is experiencing [describe symptom]. Analyze this diagnostic report to find the root cause.
-Quick Test:
+
+# Quick Test:
+```
 chmod +x sysdiag.sh
 ./sysdiag.sh
 cat sysdiag_report_*.txt | less
-
+```
 
