@@ -212,7 +212,7 @@ echo "To analyze with Claude-code:"
 echo "  1. Download this file"
 echo "  2. Run: claude-code"
 echo "  3. Upload the report and ask: 'Analyze this system diagnostic report and identify issues'"
-
+```
 Claude-code Analyse-Prompts:
 Nachdem du den Report generiert hast, nutze diese Prompts in Claude-code:
 # Basis-Analyse
